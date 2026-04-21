@@ -1,0 +1,27 @@
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+.log-card {
+  background: #ffffff;
+  color: #000000;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.log-title {
+  color: #111;
+  font-weight: bold;
+}
+
+.log-desc {
+  color: #333;
+}
+
+.log-meta {
+  color: #666;
+  font-size: 12px;
+}
