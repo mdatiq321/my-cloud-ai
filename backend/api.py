@@ -4,14 +4,48 @@ from flask_cors import CORS
 from ml_model import predict_risk
 from live_logs import generate_log
 
-import sqlite3
+import psycopg2
+import psycopg2.extras
+import os
 import csv
 import os
 import boto3
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-CORS(app)
+CORS(
+    app,
+    resources={r"/*": {"origins": "*"}}
+)
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise Exception("DATABASE_URL environment variable is not set")
+
+def get_db():
+    return psycopg2.connect(DATABASE_URL)
+
+def get_db():
+    return psycopg2.connect(DATABASE_URL)
+def create_tables():
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            username VARCHAR(100) UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+create_tables()
 
 
 # ================================================================
@@ -39,46 +73,76 @@ def get_logs():
 
 @app.route("/signup", methods=["POST"])
 def signup():
-    data = request.get_json(force=True)
-
-    username = data.get("username", "").strip()
-    password = generate_password_hash(data.get("password"))
-    created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-
     try:
-        cursor.execute(
-            "INSERT INTO users (username, password, created_at) VALUES (?, ?, ?)",
-            (username, password, created_at)
+        data = request.get_json()
+
+        username = data["username"].strip()
+        password = generate_password_hash(data["password"])
+
+        conn = get_db()
+        cur = conn.cursor()
+
+        cur.execute(
+            """
+            INSERT INTO users (username, password)
+            VALUES (%s, %s)
+            """,
+            (username, password)
         )
+
         conn.commit()
-        return jsonify({"message": "User created"})
-    except sqlite3.IntegrityError:
-        return jsonify({"error": "User already exists"})
+
+        return jsonify({
+            "message": "User created successfully"
+        }), 201
+
+    except psycopg2.errors.UniqueViolation:
+
+        conn.rollback()
+
+        return jsonify({
+            "error": "User already exists"
+        }), 400
+
+    except Exception as e:
+
+        if 'conn' in locals():
+            conn.rollback()
+
+        return jsonify({
+            "error": str(e)
+        }), 500
+
     finally:
-        conn.close()
 
+        if 'cur' in locals():
+            cur.close()
 
-@app.route("/users", methods=["GET"])
-def get_users():
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
+        if 'conn' in locals():
+            conn.close()
+       
 
-    cursor.execute("SELECT id, username, created_at FROM users")
-    users = cursor.fetchall()
+@app.route("/users")
+def users():
+
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    cur.execute("""
+        SELECT
+            id,
+            username,
+            created_at
+        FROM users
+        ORDER BY id
+    """)
+
+    users = cur.fetchall()
+
+    cur.close()
     conn.close()
 
-    result = []
-    for user in users:
-        result.append({
-            "id": user[0],
-            "username": user[1],
-            "created_at": user[2]
-        })
-
-    return jsonify(result)
+    return jsonify(users)
 
 
 # ================================================================
@@ -87,26 +151,52 @@ def get_users():
 
 @app.route("/login", methods=["POST"])
 def login():
-    data = request.get_json(force=True)
 
-    username = data.get("username", "").strip()
-    password = data.get("password")
+    try:
 
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
+        data = request.get_json()
 
-    cursor.execute("SELECT password FROM users WHERE username=?", (username,))
-    user = cursor.fetchone()
+        username = data["username"].strip()
+        password = data["password"]
 
-    conn.close()
+        conn = get_db()
+        cur = conn.cursor()
 
-    if user is None:
-        return jsonify({"error": "Account not created"})
+        cur.execute(
+            """
+            SELECT password
+            FROM users
+            WHERE username=%s
+            """,
+            (username,)
+        )
 
-    if not check_password_hash(user[0], password):
-        return jsonify({"error": "Incorrect password"})
+        user = cur.fetchone()
 
-    return jsonify({"message": "Login successful"})
+        cur.close()
+        conn.close()
+
+        if user is None:
+
+            return jsonify({
+                "error":"Account not found"
+            }),404
+
+        if not check_password_hash(user[0],password):
+
+            return jsonify({
+                "error":"Incorrect password"
+            }),401
+
+        return jsonify({
+            "message":"Login successful"
+        })
+
+    except Exception as e:
+
+        return jsonify({
+            "error":str(e)
+        }),500
 
 
 # ================================================================
