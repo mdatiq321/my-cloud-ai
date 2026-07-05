@@ -3,9 +3,7 @@ import "./style.css";
 import { useState, useEffect, useCallback } from "react";
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import axios from "axios";
-
 const API = process.env.REACT_APP_API_URL;
-
 const STORAGE_KEY = "csa_user";
 
 function getUser() {
@@ -163,8 +161,15 @@ function SignupPage({ onSwitch, onSignup }) {
       }
 
     } catch (err) {
-      setError("Server error.");
+    console.error(err);
+
+    if (err.response) {
+        console.log(err.response.data);
+        setError(err.response.data.error || "Server Error");
+    } else {
+        setError("Cannot connect to server");
     }
+}
 
     setLoading(false);
   };
