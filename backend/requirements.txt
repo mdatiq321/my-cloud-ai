@@ -2,8 +2,8 @@ Flask
 Flask-Cors
 Werkzeug
 gunicorn
-boto3
 psycopg2-binary
-pandas
+boto3
 numpy
+pandas
 scikit-learn

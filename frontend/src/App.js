@@ -69,7 +69,7 @@ function LoginPage({ onLogin, onSwitch }) {
   setError("");
 
   try {
-    const res = await axios.post("https://cloud-ai-yipl.onrender.com/login", {
+    const res = await axios.post("http://127.0.0.1:5000/login", {
       username: form.username,
       password: form.password,
     });
@@ -85,9 +85,15 @@ else if (res.data.message === "Login successful") {
 else {
   setError(res.data.error);
 }
-  } catch (err) {
+ } catch (err) {
+  console.log(err.response?.data);
+
+  if (err.response?.data?.error) {
+    setError(err.response.data.error);
+  } else {
     setError("Server error");
   }
+}
 
   setLoading(false);   // ✅ IMPORTANT
 };
