@@ -1,8 +1,10 @@
-const API = process.env.REACT_APP_API_URL;
+
 import "./style.css";
 import { useState, useEffect, useCallback } from "react";
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import axios from "axios";
+
+const API = process.env.REACT_APP_API_URL;
 
 const STORAGE_KEY = "csa_user";
 
