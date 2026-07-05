@@ -1,3 +1,4 @@
+const API = process.env.REACT_APP_API_URL;
 import "./style.css";
 import { useState, useEffect, useCallback } from "react";
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
@@ -69,7 +70,7 @@ function LoginPage({ onLogin, onSwitch }) {
   setError("");
 
   try {
-    const res = await axios.post("http://127.0.0.1:5000/login", {
+    const res = await axios.post(`axios.post(`${API}/login`, {
       username: form.username,
       password: form.password,
     });
@@ -148,7 +149,7 @@ function SignupPage({ onSwitch, onSignup }) {
     setError("");
 
     try {
-      const res = await axios.post("https://cloud-ai-yipl.onrender.com/signup", {
+      const res = await axios.post(`axios.post(`${API}/signup`, {
         username: form.username,
         password: form.password,
       });
@@ -224,7 +225,7 @@ function Dashboard({ user, onLogout }) {
     }
     setLoading(true); setError(""); setResults([]); setAnalyzed(false);
     try {
-      const res = await axios.post("http://127.0.0.1:5000/analyze", {
+      const res = await axios.post(`axios.post(`${API}/analyze`, {
         aws_access_key: awsKey,
         aws_secret_key: awsSecret,
       });
@@ -240,7 +241,7 @@ function Dashboard({ user, onLogout }) {
   const downloadCSV = async () => {
     try {
       const res = await axios.post(
-        "http://127.0.0.1:5000/download-report",
+        `axios.post(`${API}//download-report`,
         { logs: results },
         { responseType: "blob" }
       );
@@ -267,7 +268,7 @@ function Dashboard({ user, onLogout }) {
   setAuditResults([]);
 
   try {
-    const res = await axios.post("http://127.0.0.1:5000/iam-audit", {
+    const res = await axios.post(`axios.post(`${API}/iam-audit`, {
       aws_access_key: awsKey,
       aws_secret_key: awsSecret,
     });
