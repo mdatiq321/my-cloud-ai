@@ -70,7 +70,7 @@ function LoginPage({ onLogin, onSwitch }) {
   setError("");
 
   try {
-    const res = await axios.post(`axios.post(`${API}/login`, {
+    const res = await axios.post(`${API}/login`, {
       username: form.username,
       password: form.password,
     });
@@ -149,7 +149,7 @@ function SignupPage({ onSwitch, onSignup }) {
     setError("");
 
     try {
-      const res = await axios.post(`axios.post(`${API}/signup`, {
+      const res = await axios.post(`${API}/signup`, {
         username: form.username,
         password: form.password,
       });
@@ -225,7 +225,7 @@ function Dashboard({ user, onLogout }) {
     }
     setLoading(true); setError(""); setResults([]); setAnalyzed(false);
     try {
-      const res = await axios.post(`axios.post(`${API}/analyze`, {
+      const res = await axios.post(`${API}/analyze`, {
         aws_access_key: awsKey,
         aws_secret_key: awsSecret,
       });
@@ -241,7 +241,7 @@ function Dashboard({ user, onLogout }) {
   const downloadCSV = async () => {
     try {
       const res = await axios.post(
-        `axios.post(`${API}//download-report`,
+        `${API}/download-report`,
         { logs: results },
         { responseType: "blob" }
       );
@@ -268,7 +268,7 @@ function Dashboard({ user, onLogout }) {
   setAuditResults([]);
 
   try {
-    const res = await axios.post(`axios.post(`${API}/iam-audit`, {
+    const res = await axios.post(`${API}/iam-audit`, {
       aws_access_key: awsKey,
       aws_secret_key: awsSecret,
     });
@@ -535,7 +535,7 @@ function UsersPanel() {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get("https://cloud-ai-yipl.onrender.com/users");
+      const res = await axios.get(`${API}/users`);
       setUsers(res.data);
     } catch (err) {
       console.log("Error fetching users");
@@ -755,7 +755,7 @@ function FileScanner() {
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await axios.post("https://cloud-ai-yipl.onrender.com/scan-file", formData);
+  const res = await axios.post(`${API}/scan-file`, formData);
   setResult(res.data);
 };
 
