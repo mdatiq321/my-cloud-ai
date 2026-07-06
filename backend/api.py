@@ -3,12 +3,12 @@ from datetime import datetime
 from flask_cors import CORS
 from ml_model import predict_risk
 from live_logs import generate_log
+from werkzeug.security import generate_password_hash
 
 import psycopg2
 import psycopg2.extras
 import os
 import csv
-import os
 import boto3
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -26,8 +26,7 @@ if not DATABASE_URL:
 def get_db():
     return psycopg2.connect(DATABASE_URL)
 
-def get_db():
-    return psycopg2.connect(DATABASE_URL)
+
 def create_tables():
     conn = get_db()
     cur = conn.cursor()
@@ -45,8 +44,42 @@ def create_tables():
     cur.close()
     conn.close()
 
-create_tables()
 
+def create_admin():
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT id FROM users WHERE username=%s",
+            ("admin",)
+        )
+
+        admin = cur.fetchone()
+
+        if admin is None:
+            hashed_password = generate_password_hash("12345")
+
+            cur.execute(
+                """
+                INSERT INTO users (username, password)
+                VALUES (%s, %s)
+                """,
+                ("admin", hashed_password)
+            )
+
+            conn.commit()
+            print("✅ Admin account created.")
+
+        cur.close()
+        conn.close()
+
+    except Exception as e:
+        print("Error creating admin:", e)
+
+
+create_tables()
+create_admin()
 
 # ================================================================
 # HOME
@@ -148,6 +181,8 @@ def users():
 # ================================================================
 # LOGIN
 # ================================================================
+
+
 
 @app.route("/login", methods=["POST"])
 def login():
